@@ -52,8 +52,18 @@ func (dns *dnsPlugin) ParseUDP(pkt *protos.Packet) {
 	}
 
 	if dnsMsg.data.Response {
+		for _, ans := range dnsMsg.data.Answer {
+			if ok, err := filter(ans.Header().Name, ans.Header().Rrtype); err == nil && ok {
+				return
+			}
+		}
 		dns.receivedDNSResponse(&dnsTuple, dnsMsg)
 	} else /* Query */ {
+		for _, query := range dnsMsg.data.Question {
+			if ok, err := filter(query.Name, query.Qtype); err == nil && ok {
+				return
+			}
+		}
 		dns.receivedDNSRequest(&dnsTuple, dnsMsg)
 	}
 }

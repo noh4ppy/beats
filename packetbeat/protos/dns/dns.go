@@ -326,6 +326,19 @@ func (dns *dnsPlugin) receivedDNSResponse(tuple *dnsTuple, msg *dnsMessage) {
 		unmatchedResponses.Add(1)
 	}
 
+	arecFlag := false
+	var dnsRR []mkdns.RR
+	for _, ans := range msg.data.Answer {
+		if ans.Header().Rrtype == mkdns.TypeA && !arecFlag {
+			arecFlag = true
+			arec := ans.(*mkdns.A)
+			dnsRR = append(dnsRR, arec)
+		}
+	}
+	if arecFlag {
+		msg.data.Answer = dnsRR
+	}
+
 	trans.response = msg
 
 	if tuple.transport == transportUDP {
